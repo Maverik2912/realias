@@ -6,7 +6,26 @@
 	},
 	"description": "Rewrite relative imports to the most specific tsconfig path alias and re-alias existing ones when a better match is added. Lightweight bash CLI, no Node.js runtime needed.",
 	"scripts": {},
-	"keywords": [],
+	"files": [
+		"bin",
+		"lib",
+		"README.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"tsconfig",
+		"paths",
+		"path-aliases",
+		"alias",
+		"imports",
+		"import",
+		"rewrite",
+		"codemod",
+		"typescript",
+		"javascript",
+		"cli",
+		"bash"
+	],
 	"author": "Mykyta Kraskovskyi",
 	"license": "MIT"
 }
