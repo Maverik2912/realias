@@ -29,6 +29,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
+INVOCATION_DIR="$PWD"
 
 # shellcheck source=lib/canonicalize.sh
 source "$LIB_DIR/canonicalize.sh"
@@ -70,14 +71,14 @@ done
 
 # ---- Discover & load aliases --------------------------------------------
 if (( VERBOSE )); then
-  echo "Searching for tsconfig*.json from: $SCRIPT_DIR"
-  list_tsconfig_candidates "$SCRIPT_DIR" | sed 's/^/  candidate: /'
+  echo "Searching for tsconfig*.json from: $INVOCATION_DIR"
+  list_tsconfig_candidates "$INVOCATION_DIR" | sed 's/^/  candidate: /'
 fi
 
-discover_aliases "$SCRIPT_DIR" "${TSCONFIG:-}"
+discover_aliases "$INVOCATION_DIR" "${TSCONFIG:-}"
 
 if [[ -z "${CHOSEN_TSCONFIG:-}" ]]; then
-  echo "Error: no tsconfig*.json found walking up from $SCRIPT_DIR" >&2
+  echo "Error: no tsconfig*.json found walking up from $INVOCATION_DIR" >&2
   exit 1
 fi
 if [[ -z "${ALIASES_RAW:-}" ]]; then
