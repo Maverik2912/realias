@@ -1,5 +1,9 @@
 # realias
 
+[![npm version](https://img.shields.io/npm/v/realias.svg)](https://www.npmjs.com/package/realias)
+[![npm downloads](https://img.shields.io/npm/dm/realias.svg)](https://www.npmjs.com/package/realias)
+[![license](https://img.shields.io/npm/l/realias.svg)](https://github.com/Maverik2912/realias/blob/main/LICENSE)
+
 Rewrite relative imports in TypeScript/JavaScript projects to the most specific
 path alias from your `tsconfig.json` — and re-alias existing aliased imports
 when a better match is added. Lightweight CLI: pure bash + perl, no Node.js
