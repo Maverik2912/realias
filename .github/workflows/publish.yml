@@ -1,0 +1,68 @@
+name: Publish to npm
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Check if version changed
+        id: check
+        run: |
+          CURRENT=$(jq -r '.version' package.json)
+          PREVIOUS=$(git show HEAD~1:package.json 2>/dev/null | jq -r '.version' || echo "")
+          echo "Current: $CURRENT, Previous: $PREVIOUS"
+          if [ "$CURRENT" != "$PREVIOUS" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Smoke test CLI
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          chmod +x bin/realias
+          bin/realias --help
+
+      - name: Run tests
+        if: steps.check.outputs.changed == 'true'
+        run: npm test --if-present
+
+      - name: Build
+        if: steps.check.outputs.changed == 'true'
+        run: npm run build --if-present
+
+      - name: Publish to npm
+        if: steps.check.outputs.changed == 'true'
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub release
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.check.outputs.version }}" \
+            --title "v${{ steps.check.outputs.version }}" \
+            --generate-notes
