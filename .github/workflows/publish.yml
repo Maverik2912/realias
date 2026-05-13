@@ -24,9 +24,6 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Upgrade npm for trusted publishing
-        run: npm install -g npm@latest --force
-
       - name: Check if version changed
         id: check
         run: |
@@ -56,7 +53,7 @@ jobs:
 
       - name: Publish to npm
         if: steps.check.outputs.changed == 'true'
-        run: npm publish --provenance --access public
+        run: npx -y npm@latest publish --provenance --access public
 
       - name: Create GitHub release
         if: steps.check.outputs.changed == 'true'
