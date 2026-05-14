@@ -67,10 +67,10 @@ process_file() {
           continue
         fi
       elif abspath="$(expand_alias "$imppath")"; then
-        # Already aliased — expand so we can re-check for a better alias.
+        :
+      elif abspath="$(expand_stale_alias "$imppath")"; then
         :
       else
-        # Bare module (node_modules / builtin) — leave alone.
         buffer+=("$line")
         continue
       fi
