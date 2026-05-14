@@ -22,6 +22,9 @@ process_file() {
 
     if [[ "$trimmed" != import* ]]; then
       buffer+=("$line")
+      if (( ${FULL_SCAN:-0} )); then
+        continue
+      fi
       stopped_at=$line_num
       break
     fi

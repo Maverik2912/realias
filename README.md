@@ -75,13 +75,17 @@ Options:
                         (default: "node_modules .git").
   -a, --all-relative    Also rewrite imports that start with `./`.
                         By default only `../`-style imports are touched.
+  -f, --full-scan       Scan the whole file for imports instead of
+                        stopping at the first non-import line. Useful
+                        for files with imports mixed below other code
+                        (lazy imports, post-directive imports, etc.).
   -v, --verbose         Print every file scanned and every alias loaded.
   -h, --help            Show this help.
 ```
 
 Every flag can also be supplied via environment variable
 (`TSCONFIG`, `ROOT_DIR`, `FILE_EXTS`, `SKIP_DIRS`, `INCLUDE_SIBLINGS`,
-`VERBOSE`). Flags win when both are set.
+`FULL_SCAN`, `VERBOSE`). Flags win when both are set.
 
 ## Examples
 
@@ -97,6 +101,9 @@ realias -r src/components
 
 # Rewrite ./sibling imports too
 realias -a
+
+# Scan every line, not just the top import block
+realias -f
 
 # Only TypeScript files; skip extra dirs
 realias -e "ts tsx" -s "node_modules .git dist coverage"
@@ -143,9 +150,10 @@ Given `tsconfig.json`:
 
 ## Caveats
 
-- Only the **top import block** is rewritten. Once a non-import line is hit,
-  the rest of the file is copied through untouched. Dynamic `import()` calls
-  and `require(...)` are not rewritten in this release.
+- By default only the **top import block** is rewritten. Once a non-import
+  line is hit, the rest of the file is copied through untouched. Pass `-f`
+  to scan every line. Dynamic `import()` calls and `require(...)` are not
+  rewritten in this release.
 - Comment stripping in `tsconfig.json` is JSONC-aware (handles `//`, `/* */`,
   and trailing commas) but assumes no `}` characters inside the `paths`
   block.

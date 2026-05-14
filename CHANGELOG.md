@@ -31,8 +31,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   it instead of leaving it as a bare module. Triggered only when the
   current sigil is *not* present in any alias key, so legitimate but
   unmatched bare imports are still left alone.
+- `-f, --full-scan` flag (env: `FULL_SCAN`). Scans every line of each
+  source file instead of stopping at the first non-import line — picks
+  up imports placed below directives, comments, or other code.
 - Test fixture at `src/` exercising every CLI flag, with a per-flag
   expected-diff README at `src/README.md`.
+
+### Changed
+- Trimmed doc-style header comments from `bin/realias` and `lib/*.sh`;
+  the README is now the single source of behavioural documentation.
 
 ## [0.1.2] - 2026-05-13
 
