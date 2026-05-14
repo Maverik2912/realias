@@ -24,6 +24,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-14
+
 ### Added
 - Rewrite stale-sigil aliases. When an import's leading symbol (e.g. `@`)
   doesn't match any leading symbol in the current `tsconfig` aliases (e.g.
@@ -40,8 +42,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `vi.mock(...)`, `require(...)`, dynamic `import(...)`. Pattern hits
   flow through the standard resolver (relative paths, existing aliases,
   stale-sigil salvage). `-p` implicitly scans every line.
-- Test fixture at `src/` exercising every CLI flag, with a per-flag
-  expected-diff README at `src/README.md`.
 
 ### Changed
 - Trimmed doc-style header comments from `bin/realias` and `lib/*.sh`;
@@ -66,6 +66,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Flags: `-c/--tsconfig`, `-r/--root`, `-e/--exts`, `-s/--skip`,
   `-a/--all-relative`, `-v/--verbose`.
 
-[Unreleased]: https://github.com/Maverik2912/realias/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/Maverik2912/realias/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Maverik2912/realias/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Maverik2912/realias/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/Maverik2912/realias/releases/tag/v0.1.0
