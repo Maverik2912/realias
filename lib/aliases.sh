@@ -1,18 +1,4 @@
 #!/usr/bin/env bash
-# Alias matching helpers.
-#
-# Operate on the global ALIASES array, whose entries are "alias|abs"
-# (absolute target paths) and MUST be sorted longest-target-first so
-# the first prefix-match is the most specific.
-#
-# Public API:
-#   expand_alias IMPORTPATH
-#       — if IMPORTPATH starts with a known alias, prints the absolute
-#         path it expands to. Otherwise returns non-zero.
-#
-#   best_alias ABSPATH
-#       — prints the most specific alias-form of ABSPATH, or returns
-#         non-zero if no alias covers it.
 
 expand_alias() {
   local imppath="$1"

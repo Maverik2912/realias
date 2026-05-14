@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Project traversal — invokes process_file on every matching source file
-# under $ROOT_DIR, pruning unwanted directories.
-#
-# Config (env vars, both optional):
-#   FILE_EXTS  space-separated extensions   (default: "ts tsx js jsx")
-#   SKIP_DIRS  space-separated directory names to prune
-#              (default: "node_modules .git")
-#
-# Depends on: process_file, $ROOT_DIR.
 
 walk_project() {
   local -a file_exts skip_dirs
@@ -42,7 +33,6 @@ walk_project() {
   done < <(find "$ROOT_DIR" \( "${prune_args[@]}" \) -prune -o \
     -type f \( "${name_args[@]}" \) -print0)
 
-  # Clear the in-place counter when not in verbose mode.
   if ! (( ${VERBOSE:-0} )); then
     printf '\rScanned %d files.    \n' "$scanned" >&2
   fi

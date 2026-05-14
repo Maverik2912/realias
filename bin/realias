@@ -17,13 +17,6 @@
 #
 # All options can also be supplied as env vars (TSCONFIG, ROOT_DIR,
 # FILE_EXTS, SKIP_DIRS); flags win when both are set.
-#
-# Module wiring:
-#   1. tsconfig.sh     finds a tsconfig*.json and parses path aliases.
-#   2. aliases.sh      provides expand_alias / best_alias.
-#   3. canonicalize.sh resolves relative import paths to absolute.
-#   4. process.sh      rewrites a single file's import block.
-#   5. walk.sh         applies (4) across the project.
 
 set -uo pipefail
 
@@ -39,15 +32,10 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
 INVOCATION_DIR="$PWD"
 
-# shellcheck source=lib/canonicalize.sh
 source "$LIB_DIR/canonicalize.sh"
-# shellcheck source=lib/tsconfig.sh
 source "$LIB_DIR/tsconfig.sh"
-# shellcheck source=lib/aliases.sh
 source "$LIB_DIR/aliases.sh"
-# shellcheck source=lib/process.sh
 source "$LIB_DIR/process.sh"
-# shellcheck source=lib/walk.sh
 source "$LIB_DIR/walk.sh"
 
 usage() {
@@ -57,7 +45,6 @@ usage() {
 export VERBOSE=0
 export INCLUDE_SIBLINGS=0
 
-# ---- Parse flags (long + short, both `--flag X` and `--flag=X`) ----------
 while (( $# )); do
   case "$1" in
     -c|--tsconfig)     TSCONFIG="$2"; shift 2 ;;
@@ -77,7 +64,6 @@ while (( $# )); do
   esac
 done
 
-# ---- Discover & load aliases --------------------------------------------
 if (( VERBOSE )); then
   echo "Searching for tsconfig*.json from: $INVOCATION_DIR"
   list_tsconfig_candidates "$INVOCATION_DIR" | sed 's/^/  candidate: /'

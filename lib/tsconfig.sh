@@ -1,21 +1,4 @@
 #!/usr/bin/env bash
-# Discovery + parsing of tsconfig*.json.
-#
-# Public API:
-#   list_tsconfig_candidates DIR
-#       — prints every tsconfig*.json found by walking from DIR upward,
-#         shortest filename first at each level.
-#
-#   parse_tsconfig FILE
-#       — prints "alias|absolute-target" lines for compilerOptions.paths,
-#         sorted longest-target-first. Prints nothing if `paths` is absent.
-#         Handles tsconfig's JSONC dialect (comments, trailing commas).
-#
-#   discover_aliases STARTDIR [EXPLICIT_TSCONFIG]
-#       — tries candidates in order; the first one yielding aliases wins.
-#         Sets globals:
-#           CHOSEN_TSCONFIG   path of the chosen tsconfig (empty if none)
-#           ALIASES_RAW       parse_tsconfig output (empty if none yielded)
 
 list_tsconfig_candidates() {
   local dir="$1"
@@ -43,16 +26,13 @@ local $/;
 my $raw = <$fh>;
 close $fh;
 
-# Strip JSONC comments — but only outside of string literals, so that
-# `*/` inside `"**/*.feature"` or `//` inside a URL doesn't false-match.
-# The alternation captures a full string in $1; comments capture nothing
-# and get replaced with the empty string.
+# Strip JSONC comments outside string literals so `*/` in "**/*.feature"
+# or `//` in a URL doesn't false-match.
 $raw =~ s{
-    ( "(?: [^"\\] | \\. )* " )   # $1 = a complete "…" string
-  | /\* .*? \*/                  # block comment
-  | // [^\n]*                    # line comment
+    ( "(?: [^"\\] | \\. )* " )
+  | /\* .*? \*/
+  | // [^\n]*
 }{ defined $1 ? $1 : "" }gsxe;
-# Strip trailing commas before } or ].
 $raw =~ s/,(\s*[\}\]])/$1/g;
 
 my ($base_url) = $raw =~ /"baseUrl"\s*:\s*"([^"]+)"/;
@@ -62,7 +42,7 @@ my $cfg_dir = (File::Spec->splitpath($cfg))[1];
 $cfg_dir =~ s{/$}{};
 my $base_abs = File::Spec->rel2abs($base_url, $cfg_dir);
 
-# paths block: values are arrays of strings, so non-greedy `.*?` is safe.
+# non-greedy `.*?` is safe because path values are string arrays, no nested braces.
 my ($block) = $raw =~ /"paths"\s*:\s*\{(.*?)\}/s;
 exit 0 unless defined $block;
 
@@ -105,12 +85,9 @@ discover_aliases() {
       CHOSEN_TSCONFIG="$candidate"
       return 0
     fi
-    # Track the first candidate seen so the caller can distinguish
-    # "none found" from "found but none had paths".
+    # First candidate seen — lets caller distinguish "none found" from "found but no paths".
     [[ -z "$CHOSEN_TSCONFIG" ]] && CHOSEN_TSCONFIG="$candidate"
   done < <(list_tsconfig_candidates "$startdir")
 
-  # If we exit with CHOSEN_TSCONFIG set but ALIASES_RAW empty, caller knows
-  # that candidates existed but none declared compilerOptions.paths.
   return 0
 }

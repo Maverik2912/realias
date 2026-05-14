@@ -1,22 +1,4 @@
 #!/usr/bin/env bash
-# Per-file rewrite.
-#
-# Iterates lines from the top of FILE:
-#   - empty lines are passed through;
-#   - lines starting with `import` are parsed and (if they reference a
-#     project path) rewritten to use the most specific alias;
-#   - the first non-empty non-import line stops the line-by-line scan;
-#     the rest of the file is bulk-copied with `tail` (no per-line work).
-#
-# The buffered/tail design means we touch at most the import block,
-# never the body. And if nothing in the import block actually changed,
-# we don't write the file at all.
-#
-# Depends on:
-#   canonicalize, expand_alias, best_alias   (sourced from sibling libs)
-#   $ROOT_DIR                                (for pretty-printing output)
-#   $INCLUDE_SIBLINGS                        (0 = skip `./` imports,
-#                                             1 = rewrite them too)
 
 process_file() {
   local file="$1"
@@ -25,9 +7,7 @@ process_file() {
   local changed=0
   local line
   local line_num=0
-  local stopped_at=0      # line number where we broke out; 0 = never broke
-
-  # Buffer the processed prefix so we only ever write when there's a change.
+  local stopped_at=0
   local -a buffer=()
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -41,13 +21,12 @@ process_file() {
     fi
 
     if [[ "$trimmed" != import* ]]; then
-      # First non-import line — stop scanning, the rest will be bulk-copied.
       buffer+=("$line")
       stopped_at=$line_num
       break
     fi
 
-    # Match: <prefix-up-to-quote><module-path><closing-quote><rest>
+    # <prefix-up-to-quote><module-path><closing-quote><rest>
     if [[ "$line" =~ ^([[:space:]]*import[^\'\"]*[\'\"])([^\'\"]+)([\'\"])(.*)$ ]]; then
       local prefix="${BASH_REMATCH[1]}"
       local imppath="${BASH_REMATCH[2]}"
@@ -56,10 +35,8 @@ process_file() {
       local abspath=""
 
       if [[ "$imppath" == ".." || "$imppath" == "../"* ]]; then
-        # Parent-directory import — always a rewrite candidate.
         abspath="$(canonicalize "$file_dir/$imppath")"
       elif [[ "$imppath" == "." || "$imppath" == "./"* ]]; then
-        # Same-directory import — only rewrite when explicitly opted in.
         if (( ${INCLUDE_SIBLINGS:-0} )); then
           abspath="$(canonicalize "$file_dir/$imppath")"
         else
@@ -91,7 +68,6 @@ process_file() {
     return 0
   fi
 
-  # Write the (rewritten) prefix, then bulk-copy the untouched remainder.
   local tmp
   tmp="$(mktemp)"
   if (( ${#buffer[@]} )); then
