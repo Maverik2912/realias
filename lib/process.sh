@@ -1,5 +1,40 @@
 #!/usr/bin/env bash
 
+_resolve_imppath() {
+  local imppath="$1" dir="$2" abs
+  if [[ "$imppath" == ".." || "$imppath" == "../"* ]]; then
+    canonicalize "$dir/$imppath"; return 0
+  fi
+  if [[ "$imppath" == "." || "$imppath" == "./"* ]]; then
+    (( ${INCLUDE_SIBLINGS:-0} )) || return 1
+    canonicalize "$dir/$imppath"; return 0
+  fi
+  if abs="$(expand_alias "$imppath")"; then printf '%s' "$abs"; return 0; fi
+  if abs="$(expand_stale_alias "$imppath")"; then printf '%s' "$abs"; return 0; fi
+  return 1
+}
+
+_apply_patterns() {
+  (( ${#EXTRA_PATTERNS[@]} )) || return 0
+  local pat match imppath abspath replacement new_match
+  for pat in "${EXTRA_PATTERNS[@]}"; do
+    if [[ "$line" =~ $pat ]]; then
+      match="${BASH_REMATCH[0]}"
+      imppath="${BASH_REMATCH[1]}"
+      [[ -z "$imppath" ]] && continue
+      if abspath="$(_resolve_imppath "$imppath" "$file_dir")"; then
+        if replacement="$(best_alias "$abspath")"; then
+          if [[ "$replacement" != "$imppath" ]]; then
+            new_match="${match/$imppath/$replacement}"
+            line="${line/$match/$new_match}"
+            changed=1
+          fi
+        fi
+      fi
+    fi
+  done
+}
+
 process_file() {
   local file="$1"
   local file_dir
@@ -21,8 +56,9 @@ process_file() {
     fi
 
     if [[ "$trimmed" != import* ]]; then
+      _apply_patterns
       buffer+=("$line")
-      if (( ${FULL_SCAN:-0} )); then
+      if (( ${FULL_SCAN:-0} || ${#EXTRA_PATTERNS[@]} > 0 )); then
         continue
       fi
       stopped_at=$line_num
@@ -35,31 +71,13 @@ process_file() {
       local imppath="${BASH_REMATCH[2]}"
       local quote="${BASH_REMATCH[3]}"
       local rest="${BASH_REMATCH[4]}"
-      local abspath=""
-
-      if [[ "$imppath" == ".." || "$imppath" == "../"* ]]; then
-        abspath="$(canonicalize "$file_dir/$imppath")"
-      elif [[ "$imppath" == "." || "$imppath" == "./"* ]]; then
-        if (( ${INCLUDE_SIBLINGS:-0} )); then
-          abspath="$(canonicalize "$file_dir/$imppath")"
-        else
-          buffer+=("$line")
-          continue
-        fi
-      elif abspath="$(expand_alias "$imppath")"; then
-        :
-      elif abspath="$(expand_stale_alias "$imppath")"; then
-        :
-      else
-        buffer+=("$line")
-        continue
-      fi
-
-      local replacement
-      if replacement="$(best_alias "$abspath")"; then
-        if [[ "$replacement" != "$imppath" ]]; then
-          line="${prefix}${replacement}${quote}${rest}"
-          changed=1
+      local abspath replacement
+      if abspath="$(_resolve_imppath "$imppath" "$file_dir")"; then
+        if replacement="$(best_alias "$abspath")"; then
+          if [[ "$replacement" != "$imppath" ]]; then
+            line="${prefix}${replacement}${quote}${rest}"
+            changed=1
+          fi
         fi
       fi
     fi

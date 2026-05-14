@@ -34,6 +34,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `-f, --full-scan` flag (env: `FULL_SCAN`). Scans every line of each
   source file instead of stopping at the first non-import line — picks
   up imports placed below directives, comments, or other code.
+- `-p, --pattern REGEX` flag (repeatable). Lets users plug in extra
+  bash-ERE patterns whose single capture group is the path to rewrite,
+  catching call shapes the import matcher misses: `jest.mock(...)`,
+  `vi.mock(...)`, `require(...)`, dynamic `import(...)`. Pattern hits
+  flow through the standard resolver (relative paths, existing aliases,
+  stale-sigil salvage). `-p` implicitly scans every line.
 - Test fixture at `src/` exercising every CLI flag, with a per-flag
   expected-diff README at `src/README.md`.
 

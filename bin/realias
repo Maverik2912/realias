@@ -14,6 +14,11 @@
 #                         default only `../`-style imports are touched.
 #   -f, --full-scan       Scan the whole file for imports instead of
 #                         stopping at the first non-import line.
+#   -p, --pattern REGEX   Extra regex (bash ERE) whose single capture
+#                         group is the path to rewrite. Catches things
+#                         the import matcher misses: jest.mock(...),
+#                         require(...), import(...). Repeatable. Implies
+#                         a full-file scan for pattern matches.
 #   -v, --verbose         Print every candidate tsconfig tried.
 #   -h, --help            Show this help.
 #
@@ -47,6 +52,7 @@ usage() {
 export VERBOSE=0
 export INCLUDE_SIBLINGS=0
 export FULL_SCAN=0
+EXTRA_PATTERNS=()
 
 while (( $# )); do
   case "$1" in
@@ -60,6 +66,8 @@ while (( $# )); do
     --skip=*)          SKIP_DIRS="${1#*=}"; shift ;;
     -a|--all-relative) INCLUDE_SIBLINGS=1; shift ;;
     -f|--full-scan)    FULL_SCAN=1; shift ;;
+    -p|--pattern)      EXTRA_PATTERNS+=("$2"); shift 2 ;;
+    --pattern=*)       EXTRA_PATTERNS+=("${1#*=}"); shift ;;
     -v|--verbose)      VERBOSE=1; shift ;;
     -h|--help)         usage; exit 0 ;;
     --)                shift; break ;;

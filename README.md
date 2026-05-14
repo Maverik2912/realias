@@ -79,6 +79,11 @@ Options:
                         stopping at the first non-import line. Useful
                         for files with imports mixed below other code
                         (lazy imports, post-directive imports, etc.).
+  -p, --pattern REGEX   Extra bash-ERE regex whose single capture group
+                        is the path to rewrite. Catches things the
+                        import matcher misses (jest.mock, require,
+                        dynamic import). Repeatable. Implies a
+                        full-file scan for pattern matches.
   -v, --verbose         Print every file scanned and every alias loaded.
   -h, --help            Show this help.
 ```
@@ -104,6 +109,10 @@ realias -a
 
 # Scan every line, not just the top import block
 realias -f
+
+# Rewrite paths in jest.mock(...) and require(...) too
+realias -p "jest\.mock\(['\"]([^'\"]+)['\"]" \
+        -p "require\(['\"]([^'\"]+)['\"]"
 
 # Only TypeScript files; skip extra dirs
 realias -e "ts tsx" -s "node_modules .git dist coverage"
@@ -148,12 +157,39 @@ Given `tsconfig.json`:
 | `import X from './sibling'` *(`-a`)*            | `'@components/Button/sibling'` *(if applicable)* |
 | `import X from 'react'`                         | unchanged         |
 
+## Custom patterns (`-p`)
+
+The default matcher only handles `import … from '<path>'`. Anything else —
+`require('<path>')`, `jest.mock('<path>')`, `import('<path>')`,
+`vi.mock('<path>')`, `loadable(() => import('<path>'))` — needs an
+explicit pattern.
+
+Each `-p` value is a bash extended-regex (ERE) with **exactly one capture
+group around the path**. The capture is fed through the same resolver as
+ordinary imports (`../`, `./` with `-a`, existing aliases, stale-sigil
+salvage), then substituted back into the original match.
+
+| Use case             | Pattern                                |
+| -------------------- | -------------------------------------- |
+| `require('x')`       | `require\(['\"]([^'\"]+)['\"]`         |
+| `jest.mock('x')`     | `jest\.mock\(['\"]([^'\"]+)['\"]`      |
+| `vi.mock('x')`       | `vi\.mock\(['\"]([^'\"]+)['\"]`        |
+| Dynamic `import('x')`| `import\(['\"]([^'\"]+)['\"]`          |
+
+Notes:
+- `-p` automatically scans every line of every file — you don't also need `-f`.
+- One match per pattern per line. If you have two `require()` calls on the
+  same line, the first wins on this pass; rerun to catch the second.
+- Bash ERE only — no `\d`, `\b`, lookarounds, etc.
+- Paths inside the captured group must not contain glob characters (`*`,
+  `?`, `[`, `]`), which is the case for every real import path.
+
 ## Caveats
 
 - By default only the **top import block** is rewritten. Once a non-import
   line is hit, the rest of the file is copied through untouched. Pass `-f`
-  to scan every line. Dynamic `import()` calls and `require(...)` are not
-  rewritten in this release.
+  to scan every line for `import` statements, or `-p` to rewrite paths in
+  arbitrary call shapes.
 - Comment stripping in `tsconfig.json` is JSONC-aware (handles `//`, `/* */`,
   and trailing commas) but assumes no `}` characters inside the `paths`
   block.
